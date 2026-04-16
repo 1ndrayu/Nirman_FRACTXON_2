@@ -37,6 +37,7 @@ export const StateProvider = ({ children }) => {
   const [broadcasts, setBroadcasts] = useState([]);
   const [balance, setBalance] = useState(1000000);
   const [testBalance, setTestBalance] = useState(1000000);
+  const [portfolio, setPortfolio] = useState([]);
 
   // 1. Authentication Listener
   useEffect(() => {
@@ -108,6 +109,20 @@ export const StateProvider = ({ children }) => {
     });
     return () => unsubscribe();
   }, []);
+
+  // 5. User Portfolio Listener
+  useEffect(() => {
+    if (!user) {
+      setPortfolio([]);
+      return;
+    }
+    const q = query(collection(db, 'users', user.uid, 'portfolio'));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const pData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setPortfolio(pData);
+    });
+    return () => unsubscribe();
+  }, [user]);
 
   // Actions
   const login = async () => {
@@ -185,111 +200,133 @@ export const StateProvider = ({ children }) => {
   };
 
   const recallTokens = async (assetId, count) => {
-    const asset = assets.find(a => a.id === assetId);
-    if (!asset || !asset.isTokenized || (asset.tokensSold || 0) < count || !user) return false;
+    try {
+      const asset = assets.find(a => a.id === assetId);
+      if (!asset || !asset.isTokenized || (asset.tokensSold || 0) < count || !user) {
+        throw new Error("Validation Failed: Invalid asset or count.");
+      }
 
-    const recallCost = count * asset.tokenPrice;
-    const currentBalance = testMode ? testBalance : balance;
-    if (currentBalance < recallCost) return false;
+      const recallCost = count * asset.tokenPrice;
+      const currentBalance = testMode ? testBalance : balance;
+      if (currentBalance < recallCost) {
+        throw new Error("Insufficient vault reserves for token recall.");
+      }
 
-    // 1. Update Asset
-    await updateDoc(doc(db, 'assets', assetId), {
-      availableTokens: asset.availableTokens + count,
-      tokensSold: asset.tokensSold - count
-    });
+      // 1. Update Asset
+      await updateDoc(doc(db, 'assets', assetId), {
+        availableTokens: asset.availableTokens + count,
+        tokensSold: asset.tokensSold - count
+      });
 
-    // 2. Add to Ledger (Blockchain)
-    await blockchain.addTransaction(asset.ownerId, '0x0000', recallCost, assetId, 'TOKEN_RECALL', {
-      recalledCount: count,
-      assetName: asset.name,
-      payoutRate: asset.tokenPrice,
-      totalCost: recallCost
-    });
+      // 2. Add to Ledger (Blockchain)
+      await blockchain.addTransaction(asset.ownerId, '0x0000', recallCost, assetId, 'TOKEN_RECALL', {
+        recalledCount: count,
+        assetName: asset.name,
+        payoutRate: asset.tokenPrice
+      });
 
-    // 3. Update Business Balance (Payout)
-    if (testMode) {
-      const newTestBalance = testBalance - recallCost;
-      await updateDoc(doc(db, 'users', user.uid), { testBalance: newTestBalance });
-      setTestBalance(newTestBalance);
-    } else {
-      const newBalance = balance - recallCost;
-      await updateDoc(doc(db, 'users', user.uid), { balance: newBalance });
-      setBalance(newBalance);
+      // 3. Update Business Balance (Payout)
+      if (testMode) {
+        const newTB = testBalance - recallCost;
+        await updateDoc(doc(db, 'users', user.uid), { testBalance: newTB });
+        setTestBalance(newTB);
+      } else {
+        const newB = balance - recallCost;
+        await updateDoc(doc(db, 'users', user.uid), { balance: newB });
+        setBalance(newB);
+      }
+
+      return { success: true };
+    } catch (error) {
+      console.error("[Recall] Failed:", error.message);
+      return { success: false, error: error.message };
     }
-
-    return true;
   };
 
   const buyTokens = async (assetId, count) => {
-    const asset = assets.find(a => a.id === assetId);
-    if (!asset || asset.availableTokens < count || !user) return false;
+    try {
+      const asset = assets.find(a => a.id === assetId);
+      if (!asset || asset.availableTokens < count || !user) {
+        throw new Error("Acquisition failed: Asset unavailable or user not logged in.");
+      }
 
-    const totalCost = asset.tokenPrice * count;
-    const currentBalance = testMode ? testBalance : balance;
-    if (currentBalance < totalCost) return false;
+      const totalCost = asset.tokenPrice * count;
+      const currentBalance = testMode ? testBalance : balance;
+      if (currentBalance < totalCost) {
+        throw new Error("Insufficient unallocated funds.");
+      }
 
-    // 1. Update Asset
-    await updateDoc(doc(db, 'assets', assetId), {
-      availableTokens: asset.availableTokens - count,
-      tokensSold: (asset.tokensSold || 0) + count
-    });
-
-    // 2. Add to Ledger (Blockchain)
-    await blockchain.addTransaction(user.uid, asset.ownerId, totalCost, assetId, 'TOKEN_PURCHASE', {
-      tokenCount: count,
-      assetName: asset.name,
-      pricePerUnit: asset.tokenPrice
-    });
-
-    // 3. Update User Balance
-    if (testMode) {
-      const newTestBalance = testBalance - totalCost;
-      await updateDoc(doc(db, 'users', user.uid), { testBalance: newTestBalance });
-      setTestBalance(newTestBalance);
-    } else {
-      const newBalance = balance - totalCost;
-      await updateDoc(doc(db, 'users', user.uid), { balance: newBalance });
-      setBalance(newBalance);
-    }
-
-    // 4. Update Portfolio (Saved in user sub-collection)
-    const portfolioRef = doc(db, 'users', user.uid, 'portfolio', assetId);
-    const portfolioSnap = await getDoc(portfolioRef);
-    if (portfolioSnap.exists()) {
-      await updateDoc(portfolioRef, { count: portfolioSnap.data().count + count });
-    } else {
-      await setDoc(portfolioRef, { 
-        assetId, 
-        assetName: asset.name, 
-        count, 
-        buyPrice: asset.tokenPrice 
+      // 1. Update Asset
+      await updateDoc(doc(db, 'assets', assetId), {
+        availableTokens: asset.availableTokens - count,
+        tokensSold: (asset.tokensSold || 0) + count
       });
-    }
 
-    return true;
+      // 2. Add to Ledger (Blockchain)
+      await blockchain.addTransaction(user.uid, asset.ownerId, totalCost, assetId, 'TOKEN_PURCHASE', {
+        tokenCount: count,
+        assetName: asset.name
+      });
+
+      // 3. Update User Balance
+      if (testMode) {
+        const newTB = testBalance - totalCost;
+        await updateDoc(doc(db, 'users', user.uid), { testBalance: newTB });
+        setTestBalance(newTB);
+      } else {
+        const newB = balance - totalCost;
+        await updateDoc(doc(db, 'users', user.uid), { balance: newB });
+        setBalance(newB);
+      }
+
+      // 4. Update Portfolio
+      const portfolioRef = doc(db, 'users', user.uid, 'portfolio', assetId);
+      const portfolioSnap = await getDoc(portfolioRef);
+      if (portfolioSnap.exists()) {
+        await updateDoc(portfolioRef, { count: portfolioSnap.data().count + count });
+      } else {
+        await setDoc(portfolioRef, { assetId, assetName: asset.name, count });
+      }
+
+      return { success: true };
+    } catch (error) {
+      console.error("[Acquisition] Failed:", error.message);
+      return { success: false, error: error.message };
+    }
   };
 
   const reliquidateProfits = async () => {
-    if (!user) return;
+    if (!user || portfolio.length === 0) return { success: false, error: "No active holdings found." };
     
-    // Simulate yield harvest: 2% of total portfolio value
-    const harvestAmount = testMode ? 5000 : 2500; 
+    // Calculate real-time yield: sum(owned_tokens * accrued_since_last_harvest)
+    // For this prototype, we'll use a dynamic factor: (asset.cashflow / asset.tokenCount) * 1.5 (simulated accrual multiplyer)
+    let totalHarvest = 0;
+    
+    portfolio.forEach(item => {
+      const asset = assets.find(a => a.id === item.assetId);
+      if (asset && asset.tokenCount > 0) {
+        const yieldPerToken = asset.cashflow / asset.tokenCount;
+        totalHarvest += (item.count * yieldPerToken) * 12; // Annualized harvest
+      }
+    });
+
+    if (totalHarvest === 0) return { success: false, error: "Zero accrued profits to liquidate." };
     
     if (testMode) {
-      const newB = testBalance + harvestAmount;
+      const newB = testBalance + totalHarvest;
       await updateDoc(doc(db, 'users', user.uid), { testBalance: newB });
       setTestBalance(newB);
     } else {
-      const newB = balance + harvestAmount;
+      const newB = balance + totalHarvest;
       await updateDoc(doc(db, 'users', user.uid), { balance: newB });
       setBalance(newB);
     }
 
-    await blockchain.addTransaction('0x0000', user.uid, harvestAmount, 'PROTOCOL', 'YIELD_HARVEST', {
-      method: 'SIMULATED_RELIQUIDATION'
+    await blockchain.addTransaction('0x0000', user.uid, totalHarvest, 'PROTOCOL', 'YIELD_HARVEST', {
+      method: 'PORTFOLIO_SWEEP'
     });
     
-    return true;
+    return { success: true, amount: totalHarvest };
   };
 
   return (
@@ -299,7 +336,7 @@ export const StateProvider = ({ children }) => {
         setTestMode(val);
         if (user) await updateDoc(doc(db, 'users', user.uid), { testMode: val });
       },
-      assets, transactions, broadcasts, balance, testBalance,
+      assets, transactions, broadcasts, balance, testBalance, portfolio,
       login, logout, addAsset, updateAssetValue, tokenizeAsset, buyTokens, recallTokens, reliquidateProfits,
       verifyChain: blockchain.verifyChain
     }}>

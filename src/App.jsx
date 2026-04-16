@@ -123,46 +123,65 @@ const BusinessInterface = () => {
       <AnimatePresence>
         {showForm && (
           <motion.div 
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="box-panel" 
-            style={{ padding: '32px', marginBottom: '32px' }}
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="registry-gate"
           >
+            <div style={{ position: 'absolute', top: '-100px', right: '-100px', width: '300px', height: '300px', background: 'var(--glow-color)', borderRadius: '50%', filter: 'blur(80px)', opacity: 0.5 }} />
+            
+            <div style={{ marginBottom: '32px' }}>
+              <h3 style={{ fontSize: '1.8rem', fontWeight: 800, marginBottom: '8px' }}>Notary Registry Gateway</h3>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Establish a new legally-governed asset on the FRACTXON protocol.</p>
+            </div>
+
             <form onSubmit={handleAddAsset}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                <input 
-                  className="input-field" placeholder="Business Legal Name" required
-                  value={newAsset.businessName} onChange={e => setNewAsset({...newAsset, businessName: e.target.value})}
-                />
-                <input 
-                  className="input-field" placeholder="Asset Identifier" required
-                  value={newAsset.name} onChange={e => setNewAsset({...newAsset, name: e.target.value})}
-                />
-                <input 
-                  className="input-field" placeholder={`Appraised Value (${testMode ? 'F$' : '$'})`} required
-                  value={formatNumber(newAsset.value)} onChange={e => handleNumericInput(e.target.value, (v) => setNewAsset({...newAsset, value: v}))}
-                />
-                <input 
-                  className="input-field" placeholder={`Net Monthly Yield (${testMode ? 'F$' : '$'})`} required
-                  value={formatNumber(newAsset.cashflow)} onChange={e => handleNumericInput(e.target.value, (v) => setNewAsset({...newAsset, cashflow: v}))}
-                />
-              </div>
-              <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', alignItems: 'center' }}>
-                <div style={{ marginRight: 'auto', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '32px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)' }}>LEGAL ENTITY NAME</label>
                   <input 
-                    type="checkbox" 
-                    id="isTestAsset"
-                    checked={testMode}
-                    readOnly
-                    style={{ accentColor: 'var(--accent-primary)' }}
+                    className="input-field" style={{ marginBottom: 0 }} placeholder="e.g. Acme Realty Ltd." required
+                    value={newAsset.businessName} onChange={e => setNewAsset({...newAsset, businessName: e.target.value})}
                   />
-                  <label htmlFor="isTestAsset" style={{ fontSize: '0.8rem', color: 'var(--accent-primary)', fontWeight: 700, cursor: 'pointer' }}>
-                    {testMode ? 'PROVISIONAL TEST ASSET (F$)' : 'LIVE MARKET ASSET ($)'}
-                  </label>
                 </div>
-                <button type="button" className="btn btn-secondary" onClick={() => setShowForm(false)}>Cancel</button>
-                <button type="submit" className="btn btn-primary">Publish to Registry</button>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)' }}>ASSET IDENTIFIER (URI)</label>
+                  <input 
+                    className="input-field" style={{ marginBottom: 0 }} placeholder="e.g. Downtown Plaza B1" required
+                    value={newAsset.name} onChange={e => setNewAsset({...newAsset, name: e.target.value})}
+                  />
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)' }}>APPRAISED VALUATION</label>
+                  <div style={{ position: 'relative' }}>
+                    <span style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', fontWeight: 700, opacity: 0.5 }}>{testMode ? 'F$' : '$'}</span>
+                    <input 
+                      className="input-field" style={{ marginBottom: 0, paddingLeft: '40px' }} required
+                      value={formatNumber(newAsset.value)} onChange={e => handleNumericInput(e.target.value, (v) => setNewAsset({...newAsset, value: v}))}
+                    />
+                  </div>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)' }}>PROJECTED MONTHLY REVENUE</label>
+                  <div style={{ position: 'relative' }}>
+                    <span style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', fontWeight: 700, opacity: 0.5 }}>{testMode ? 'F$' : '$'}</span>
+                    <input 
+                      className="input-field" style={{ marginBottom: 0, paddingLeft: '40px' }} required
+                      value={formatNumber(newAsset.cashflow)} onChange={e => handleNumericInput(e.target.value, (v) => setNewAsset({...newAsset, cashflow: v}))}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '16px', justifyContent: 'flex-end', paddingTop: '20px', borderTop: '1px solid var(--border-light)' }}>
+                <div style={{ marginRight: 'auto', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <ShieldCheck size={18} color="var(--accent-primary)" />
+                  <span style={{ fontSize: '0.8rem', fontWeight: 700, letterSpacing: '0.5px' }}>
+                    CRYPTOGRAPHICALLY SIGNED REGISTRY
+                  </span>
+                </div>
+                <button type="button" className="btn btn-secondary" style={{ padding: '12px 32px' }} onClick={() => setShowForm(false)}>Discard</button>
+                <button type="submit" className="btn btn-primary" style={{ padding: '12px 40px' }}>Finalize & Publish</button>
               </div>
             </form>
           </motion.div>
@@ -351,9 +370,12 @@ const BusinessInterface = () => {
                           className="btn btn-primary" 
                           disabled={(testMode ? testBalance : balance) < (asset.tokenPrice * (parseInt(recallCount.replace(/,/g, '')) || 0))}
                           onClick={async () => {
-                            const success = await recallTokens(asset.id, parseInt(recallCount.replace(/,/g, '')));
-                            if (success) setActiveAssetId(null);
-                            else alert("Recall failed: Insufficient vault reserves.");
+                            const result = await recallTokens(asset.id, parseInt(recallCount.replace(/,/g, '')));
+                            if (result.success) {
+                              setActiveAssetId(null);
+                            } else {
+                              alert(`Recall Protocol Aborted: ${result.error}`);
+                            }
                           }}
                         >
                           Execute Recall
@@ -457,9 +479,13 @@ const InvestorInterface = () => {
                       <button 
                         className="btn btn-primary" 
                         style={{ width: '100%', justifyContent: 'center' }}
-                        onClick={() => {
-                          const success = buyTokens(asset.id, parseInt(purchaseCount.replace(/,/g, '')));
-                          if (success) setActiveAssetId(null);
+                        onClick={async () => {
+                          const result = await buyTokens(asset.id, parseInt(purchaseCount.replace(/,/g, '')));
+                          if (result.success) {
+                            setActiveAssetId(null);
+                          } else {
+                            alert(result.error);
+                          }
                         }}
                       >
                         Confirm Acquisition
@@ -518,7 +544,14 @@ const InvestorInterface = () => {
                 whileTap={{ scale: 0.97 }}
                 className="btn btn-primary" 
                 style={{ width: '100%', justifyContent: 'center', padding: '16px' }}
-                onClick={() => reliquidateProfits()}
+                onClick={async () => {
+                  const result = await reliquidateProfits();
+                  if (result.success) {
+                    alert(`Harvest Successful: ${testMode ? 'F$' : '$'}${formatNumber(result.amount.toFixed(0))} returned to vault.`);
+                  } else {
+                    alert(result.error);
+                  }
+                }}
               >
                 Re-Liquidate Profits
               </motion.button>
