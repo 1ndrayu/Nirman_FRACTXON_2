@@ -11,6 +11,23 @@ import {
   TrendingUp,
   Briefcase
 } from 'lucide-react';
+import { motion } from 'framer-motion';
+
+const staggerContainer = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+      delayChildren: 0.1
+    }
+  }
+};
+
+const staggerItem = {
+  hidden: { opacity: 0, y: 30 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } }
+};
 
 const ProfilePage = () => {
   const { user, profile, mode, setMode, logout, balance } = useAppState();
@@ -18,8 +35,8 @@ const ProfilePage = () => {
   if (!user) return null;
 
   return (
-    <div className="animate-fade-in">
-      <div className="profile-header">
+    <motion.div variants={staggerContainer} initial="hidden" animate="show">
+      <motion.div variants={staggerItem} className="profile-header">
         <img src={user.photoURL || 'https://via.placeholder.com/100'} alt="Profile" className="profile-img" />
         <div>
           <h2 style={{ fontSize: '2.5rem', fontWeight: 800 }}>{user.displayName}</h2>
@@ -27,10 +44,10 @@ const ProfilePage = () => {
             <Mail size={16} /> {user.email}
           </p>
         </div>
-      </div>
+      </motion.div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '32px' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+        <motion.div variants={staggerItem} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
           <div className="box-panel" style={{ padding: '24px' }}>
             <h3 style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <Settings size={20} /> Identity Settings
@@ -60,13 +77,13 @@ const ProfilePage = () => {
             <div style={{ fontSize: '2.5rem', fontWeight: 900 }}>${balance.toLocaleString()}</div>
             <p style={{ fontSize: '0.8rem', marginTop: '8px', opacity: 0.9 }}>Available for cross-asset deployment</p>
           </div>
-        </div>
+        </motion.div>
 
-        <div className="box-panel" style={{ padding: '32px' }}>
+        <motion.div variants={staggerItem} className="box-panel" style={{ padding: '32px' }}>
           <h3 style={{ marginBottom: '24px' }}>Applicable Profile Data</h3>
           
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
-            <div style={{ padding: '20px', background: '#f9fafb', borderRadius: '12px' }}>
+            <div style={{ padding: '20px', background: 'var(--bg-surface)', borderRadius: '12px', border: '1px solid var(--border-light)' }}>
               <Shield size={24} color="var(--accent-primary)" style={{ marginBottom: '12px' }} />
               <div style={{ fontWeight: 700 }}>KYC Status</div>
               <div style={{ fontSize: '0.85rem', color: '#059669', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '4px' }}>
@@ -74,7 +91,7 @@ const ProfilePage = () => {
               </div>
             </div>
 
-            <div style={{ padding: '20px', background: '#f9fafb', borderRadius: '12px' }}>
+            <div style={{ padding: '20px', background: 'var(--bg-surface)', borderRadius: '12px', border: '1px solid var(--border-light)' }}>
               <Briefcase size={24} color="var(--accent-primary)" style={{ marginBottom: '12px' }} />
               <div style={{ fontWeight: 700 }}>Account Tier</div>
               <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '4px' }}>
@@ -91,8 +108,8 @@ const ProfilePage = () => {
           </p>
           
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '16px', border: '1px solid var(--border-light)', borderRadius: '12px' }}>
-            <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: '#eff6ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Building2 size={20} color="#3b82f6" />
+            <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: 'var(--bg-surface)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Building2 size={20} color="var(--accent-primary)" />
             </div>
             <div style={{ flex: 1 }}>
               <div style={{ fontWeight: 600 }}>Default Issuer Entity</div>
@@ -100,9 +117,9 @@ const ProfilePage = () => {
             </div>
             <button className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: '0.75rem' }}>Edit</button>
           </div>
-        </div>
+        </motion.div>
       </div>
-    </div>
+    </motion.div>
   );
 };
 

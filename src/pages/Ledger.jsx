@@ -3,14 +3,30 @@ import { useAppState } from '../context/StateContext';
 import { Database, ShieldCheck, User as UserIcon, ExternalLink, ArrowRightLeft } from 'lucide-react';
 import { motion } from 'framer-motion';
 
+const staggerContainer = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.05,
+      delayChildren: 0.1
+    }
+  }
+};
+
+const staggerItem = {
+  hidden: { opacity: 0, y: 20 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: "easeOut" } }
+};
+
 const LedgerPage = () => {
   const { transactions, user } = useAppState();
 
   return (
-    <div className="animate-fade-in">
+    <motion.div variants={staggerContainer} initial="hidden" animate="show" className="animate-fade-in-disabled">
       <div style={{ marginBottom: '40px' }}>
-        <h2 style={{ fontSize: '2rem', fontWeight: 800 }}>Master <span className="gradient-text">Ledger</span></h2>
-        <p style={{ color: 'var(--text-muted)' }}>Real-time transparency for all asset tokenization and transfers on the protocol.</p>
+        <motion.h2 variants={staggerItem} style={{ fontSize: '2rem', fontWeight: 800 }}>Master <span className="gradient-text">Ledger</span></motion.h2>
+        <motion.p variants={staggerItem} style={{ color: 'var(--text-muted)' }}>Real-time transparency for all asset tokenization and transfers on the protocol.</motion.p>
       </div>
 
       <div className="box-panel" style={{ overflow: 'hidden' }}>
@@ -32,13 +48,12 @@ const LedgerPage = () => {
           <span>Status</span>
         </div>
 
-        <div style={{ maxHeight: '600px', overflowY: 'auto' }}>
+        <motion.div variants={staggerContainer} initial="hidden" animate="show" style={{ maxHeight: '600px', overflowY: 'auto' }}>
           {transactions.map(tx => {
             const isUserInvolved = user && (tx.from === user.uid || tx.to === user.uid);
             return (
               <motion.div 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
+                variants={staggerItem}
                 key={tx.id} 
                 className={`ledger-row ${isUserInvolved ? 'tx-highlight' : ''}`}
               >
@@ -56,7 +71,7 @@ const LedgerPage = () => {
                   <span style={{ 
                     padding: '4px 8px', 
                     borderRadius: '4px', 
-                    background: '#f3f4f6', 
+                    background: 'var(--bg-surface)', 
                     fontSize: '0.7rem',
                     fontWeight: 700
                   }}>
@@ -74,9 +89,9 @@ const LedgerPage = () => {
               No transactions detected on the master chain yet.
             </div>
           )}
-        </div>
+        </motion.div>
       </div>
-    </div>
+    </motion.div>
   );
 };
 

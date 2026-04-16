@@ -25,20 +25,43 @@ import LedgerPage from './pages/Ledger';
 
 // Components
 import BroadcastBar from './components/BroadcastBar';
+import DottedMatrix from './components/DottedMatrix';
+
+const staggerContainer = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+      delayChildren: 0.1
+    }
+  }
+};
+
+const staggerItem = {
+  hidden: { opacity: 0, y: 30 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } }
+};
 
 const LoginView = () => {
   const { login } = useAppState();
   return (
-    <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f3f4f6' }}>
-      <div className="box-panel animate-fade-in" style={{ padding: '60px', textAlign: 'center', maxWidth: '500px' }}>
-        <h1 style={{ fontSize: '3rem', fontWeight: 900, marginBottom: '16px' }}>FRAC<span className="gradient-text">TXON_</span></h1>
-        <p style={{ color: 'var(--text-muted)', marginBottom: '40px' }}>
+    <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <motion.div 
+        variants={staggerContainer}
+        initial="hidden"
+        animate="show"
+        className="box-panel" 
+        style={{ padding: '60px', textAlign: 'center', maxWidth: '500px', border: '1px solid var(--border-light)' }}
+      >
+        <motion.h1 variants={staggerItem} style={{ fontSize: '3rem', fontWeight: 900, marginBottom: '16px' }}>FRAC<span className="gradient-text">TXON_</span></motion.h1>
+        <motion.p variants={staggerItem} style={{ color: 'var(--text-muted)', marginBottom: '40px' }}>
           Secure, transparent asset tokenization powered by a decentralized master-chain ledger.
-        </p>
-        <button className="btn btn-primary" onClick={login} style={{ fontSize: '1.1rem', padding: '16px 32px' }}>
+        </motion.p>
+        <motion.button variants={staggerItem} className="btn btn-primary" onClick={login} style={{ fontSize: '1.1rem', padding: '16px 32px' }}>
           Sign in with Google Account
-        </button>
-      </div>
+        </motion.button>
+      </motion.div>
     </div>
   );
 };
@@ -62,15 +85,15 @@ const BusinessInterface = () => {
   };
 
   return (
-    <div className="animate-fade-in">
+    <motion.div variants={staggerContainer} initial="hidden" animate="show">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
-        <div>
+        <motion.div variants={staggerItem}>
           <h2 style={{ fontSize: '2.5rem', fontWeight: 900 }}>Business <span className="gradient-text">Vault</span></h2>
           <p style={{ color: 'var(--text-muted)' }}>Manage your asset registry and tokenization strategies.</p>
-        </div>
-        <button className="btn btn-primary" onClick={() => setShowForm(true)}>
+        </motion.div>
+        <motion.button variants={staggerItem} className="btn btn-primary" onClick={() => setShowForm(true)}>
           <Plus size={20} /> Register New Asset
-        </button>
+        </motion.button>
       </div>
 
       <AnimatePresence>
@@ -110,9 +133,9 @@ const BusinessInterface = () => {
         )}
       </AnimatePresence>
 
-      <div className="dashboard-grid">
+      <motion.div variants={staggerContainer} className="dashboard-grid">
         {assets.map(asset => (
-          <div key={asset.id} className="box-panel asset-card" style={{ position: 'relative' }}>
+          <motion.div variants={staggerItem} key={asset.id} className="box-panel asset-card" style={{ position: 'relative' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div>
                 <h3 style={{ fontSize: '1.4rem', fontWeight: 700, marginBottom: '4px' }}>{asset.name}</h3>
@@ -191,10 +214,10 @@ const BusinessInterface = () => {
                 </div>
               </div>
             )}
-          </div>
+          </motion.div>
         ))}
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 };
 
@@ -202,15 +225,15 @@ const InvestorInterface = () => {
   const { assets, balance, buyTokens } = useAppState();
 
   return (
-    <div className="animate-fade-in">
+    <motion.div variants={staggerContainer} initial="hidden" animate="show">
       <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '32px' }}>
-        <div>
+        <motion.div variants={staggerItem}>
           <h2 style={{ fontSize: '2.5rem', fontWeight: 900, marginBottom: '8px' }}>Asset <span className="gradient-text">Exchange</span></h2>
           <p style={{ color: 'var(--text-muted)', marginBottom: '32px' }}>Participate in fractionalized revenue-generating assets.</p>
 
-          <div className="dashboard-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
+          <motion.div variants={staggerContainer} className="dashboard-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
             {assets.filter(a => a.isTokenized).map(asset => (
-              <div key={asset.id} className="box-panel asset-card">
+              <motion.div variants={staggerItem} key={asset.id} className="box-panel asset-card">
                 <h3 style={{ marginBottom: '4px', fontWeight: 700 }}>{asset.name}</h3>
                 <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '16px' }}>{asset.businessName}</p>
                 
@@ -219,7 +242,7 @@ const InvestorInterface = () => {
                   <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>INDEX PRICE</span>
                 </div>
 
-                <div style={{ background: '#f9fafb', padding: '16px', borderRadius: '12px', marginBottom: '24px', border: '1px solid var(--border-light)' }}>
+                <div style={{ background: 'var(--bg-surface)', padding: '16px', borderRadius: '12px', marginBottom: '24px', border: '1px solid var(--border-light)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', marginBottom: '8px' }}>
                     <span style={{ color: 'var(--text-muted)' }}>Projected ROI</span>
                     <span style={{ color: '#059669', fontWeight: 700 }}>+{( (asset.cashflow / asset.value) * 100 ).toFixed(1)}%</span>
@@ -240,12 +263,12 @@ const InvestorInterface = () => {
                 >
                   Acquire Stake <ArrowRight size={16} />
                 </button>
-              </div>
+              </motion.div>
             ))}
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
 
-        <div>
+        <motion.div variants={staggerItem}>
           <div className="box-panel" style={{ padding: '28px', position: 'sticky', top: '24px' }}>
             <h3 style={{ marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <Wallet size={20} style={{ color: 'var(--accent-primary)' }} /> Capital Reserves
@@ -262,9 +285,9 @@ const InvestorInterface = () => {
               Re-Liquidate Profits
             </button>
           </div>
-        </div>
+        </motion.div>
       </div>
-    </div>
+    </motion.div>
   );
 };
 
@@ -330,28 +353,17 @@ const AppContent = () => {
 };
 
 function App() {
-  const [mousePosition, setMousePosition] = React.useState({ x: 0, y: 0 });
+  const { mode } = useAppState();
 
-  React.useEffect(() => {
-    const handleMouseMove = (e) => {
-      setMousePosition({ x: e.clientX, y: e.clientY });
-    };
-
-    window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
-  }, []);
+  useEffect(() => {
+    document.body.className = `theme-${mode}`;
+  }, [mode]);
 
   return (
-    <StateProvider>
-      <div 
-        className="mouse-glow" 
-        style={{ 
-          '--mouse-x': `${mousePosition.x}px`, 
-          '--mouse-y': `${mousePosition.y}px` 
-        }} 
-      />
+    <>
+      <DottedMatrix />
       <AppContent />
-    </StateProvider>
+    </>
   );
 }
 

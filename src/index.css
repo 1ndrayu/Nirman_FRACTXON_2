@@ -1,19 +1,38 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;600;700&display=swap');
 
 :root {
-  --bg-page: #f9fafb;
-  --bg-surface: #ffffff;
-  --accent-primary: #ca8a04;
-  --accent-silver: #cbd5e1;
+  --bg-page: #ffffff;
+  --bg-surface: #f9fafb;
+  --accent-primary: #ea580c;
   --accent-gold: #fbbf24;
-  --accent-gradient: linear-gradient(135deg, var(--accent-silver) 0%, var(--accent-gold) 100%);
+  --accent-gradient: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-gold) 100%);
   --text-main: #111827;
   --text-muted: #6b7280;
   --border-light: #e5e7eb;
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  --glow-color: rgba(202, 138, 4, 0.12);
+  --glow-color: rgba(234, 88, 12, 0.15);
+}
+
+.theme-business {
+  --bg-page: #000000;
+  --bg-surface: #111111;
+  --text-main: #ffffff;
+  --text-muted: #9ca3af;
+  --border-light: #262626;
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.6);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.7);
+  --glow-color: rgba(234, 88, 12, 0.2);
+}
+
+.theme-investor {
+  --bg-page: #ffffff;
+  --bg-surface: #f9fafb;
+  --text-main: #111827;
+  --text-muted: #6b7280;
+  --border-light: #e5e7eb;
 }
 
 * {
@@ -33,7 +52,7 @@ body {
 
 h1, h2, h3, .brand {
   font-family: 'Outfit', sans-serif;
-  color: #000000;
+  color: var(--text-main);
 }
 
 .box-panel {
@@ -124,30 +143,12 @@ h1, h2, h3, .brand {
   height: 100%;
   pointer-events: none;
   z-index: 0;
-  background: radial-gradient(
-    800px circle at var(--mouse-x, 0) var(--mouse-y, 0),
-    var(--glow-color),
-    transparent 80%
-  );
-  transition: opacity 0.3s ease;
 }
 
 body {
-  position: relative;
-}
-
-body::before {
-  content: "";
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-image: 
-    radial-gradient(circle at 2px 2px, rgba(0,0,0,0.02) 1px, transparent 0);
-  background-size: 24px 24px;
-  pointer-events: none;
-  z-index: -1;
+  background-color: var(--bg-page);
+  color: var(--text-main);
+  transition: background-color 0.5s ease, color 0.5s ease;
 }
 
 /* Toggle Switch Styling */
@@ -173,7 +174,7 @@ body::before {
 }
 
 .toggle-option.active {
-  color: #000;
+  color: var(--text-main);
 }
 
 .toggle-slider {
