@@ -1,0 +1,56 @@
+type User @table {
+  authId: String!
+  accountType: String!
+  createdAt: Timestamp!
+  email: String
+  displayName: String
+  kycStatus: String
+  businessName: String
+}
+
+type Asset @table {
+  name: String!
+  assetType: String!
+  estimatedValue: Float!
+  status: String!
+  createdAt: Timestamp!
+  description: String
+  legalDocsUrl: String
+  owner: User
+}
+
+type TokenizationOffering @table {
+  tokenSymbol: String!
+  totalTokens: Int64!
+  tokenPrice: Float!
+  currencyType: String!
+  status: String!
+  startDate: Timestamp!
+  endDate: Timestamp!
+  createdAt: Timestamp!
+  minInvestment: Float
+  vestingSchedule: String
+  asset: Asset
+}
+
+type Investment @table {
+  amountInvested: Float!
+  investmentCurrency: String!
+  tokensReceived: Int64!
+  transactionHash: String
+  status: String!
+  createdAt: Timestamp!
+  fiatTransactionId: String
+  investor: User
+  offering: TokenizationOffering
+}
+
+type Transaction @table {
+  transactionType: String!
+  amount: Float!
+  currency: String!
+  timestamp: Timestamp!
+  relatedEntityId: UUID
+  blockchainTxId: String
+  user: User
+}
