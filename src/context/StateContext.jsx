@@ -31,10 +31,12 @@ export const StateProvider = ({ children }) => {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [mode, setMode] = useState('investor'); // Default role
+  const [testMode, setTestMode] = useState(false);
   const [assets, setAssets] = useState([]);
   const [transactions, setTransactions] = useState([]);
   const [broadcasts, setBroadcasts] = useState([]);
   const [balance, setBalance] = useState(1000000);
+  const [testBalance, setTestBalance] = useState(1000000);
 
   // 1. Authentication Listener
   useEffect(() => {
@@ -64,6 +66,8 @@ export const StateProvider = ({ children }) => {
           setProfile(data);
           setMode(data.role || 'investor');
           setBalance(data.balance || 0);
+          setTestBalance(data.testBalance || 1000000);
+          setTestMode(data.testMode || false);
         }
       } else {
         setUser(null);
@@ -129,7 +133,9 @@ export const StateProvider = ({ children }) => {
     const newAsset = {
       ...assetData,
       ownerId: user.uid,
+      ownerName: user.displayName,
       isTokenized: false,
+      isTest: testMode,
       timestamp: Date.now()
     };
     await addDoc(collection(db, 'assets'), newAsset);
@@ -160,13 +166,58 @@ export const StateProvider = ({ children }) => {
     if (!asset) return;
     
     const tokenPrice = asset.value / tokenCount;
-    await updateDoc(doc(db, 'assets', assetId), {
+    const updateData = {
       isTokenized: true,
       tokenCount,
       tokenPrice,
       availableTokens: tokenCount,
       tokensSold: 0
+    };
+    
+    await updateDoc(doc(db, 'assets', assetId), updateData);
+    
+    // Create Blockchain record of Issuance
+    await blockchain.addTransaction('0x0000', user.uid, asset.value, assetId, 'TOKEN_ISSUANCE', {
+      tokenCount,
+      tokenPrice,
+      assetName: asset.name
     });
+  };
+
+  const recallTokens = async (assetId, count) => {
+    const asset = assets.find(a => a.id === assetId);
+    if (!asset || !asset.isTokenized || (asset.tokensSold || 0) < count || !user) return false;
+
+    const recallCost = count * asset.tokenPrice;
+    const currentBalance = testMode ? testBalance : balance;
+    if (currentBalance < recallCost) return false;
+
+    // 1. Update Asset
+    await updateDoc(doc(db, 'assets', assetId), {
+      availableTokens: asset.availableTokens + count,
+      tokensSold: asset.tokensSold - count
+    });
+
+    // 2. Add to Ledger (Blockchain)
+    await blockchain.addTransaction(asset.ownerId, '0x0000', recallCost, assetId, 'TOKEN_RECALL', {
+      recalledCount: count,
+      assetName: asset.name,
+      payoutRate: asset.tokenPrice,
+      totalCost: recallCost
+    });
+
+    // 3. Update Business Balance (Payout)
+    if (testMode) {
+      const newTestBalance = testBalance - recallCost;
+      await updateDoc(doc(db, 'users', user.uid), { testBalance: newTestBalance });
+      setTestBalance(newTestBalance);
+    } else {
+      const newBalance = balance - recallCost;
+      await updateDoc(doc(db, 'users', user.uid), { balance: newBalance });
+      setBalance(newBalance);
+    }
+
+    return true;
   };
 
   const buyTokens = async (assetId, count) => {
@@ -183,12 +234,22 @@ export const StateProvider = ({ children }) => {
     });
 
     // 2. Add to Ledger (Blockchain)
-    await blockchain.addTransaction(user.uid, asset.ownerId, totalCost, assetId, 'TOKEN_PURCHASE');
+    await blockchain.addTransaction(user.uid, asset.ownerId, totalCost, assetId, 'TOKEN_PURCHASE', {
+      tokenCount: count,
+      assetName: asset.name,
+      pricePerUnit: asset.tokenPrice
+    });
 
     // 3. Update User Balance
-    const newBalance = balance - totalCost;
-    await updateDoc(doc(db, 'users', user.uid), { balance: newBalance });
-    setBalance(newBalance);
+    if (testMode) {
+      const newTestBalance = testBalance - totalCost;
+      await updateDoc(doc(db, 'users', user.uid), { testBalance: newTestBalance });
+      setTestBalance(newTestBalance);
+    } else {
+      const newBalance = balance - totalCost;
+      await updateDoc(doc(db, 'users', user.uid), { balance: newBalance });
+      setBalance(newBalance);
+    }
 
     // 4. Update Portfolio (Saved in user sub-collection)
     const portfolioRef = doc(db, 'users', user.uid, 'portfolio', assetId);
@@ -210,8 +271,12 @@ export const StateProvider = ({ children }) => {
   return (
     <StateContext.Provider value={{
       user, profile, loading, mode, setMode: toggleMode,
-      assets, transactions, broadcasts, balance,
-      login, logout, addAsset, updateAssetValue, tokenizeAsset, buyTokens
+      testMode, setTestMode: async (val) => {
+        setTestMode(val);
+        if (user) await updateDoc(doc(db, 'users', user.uid), { testMode: val });
+      },
+      assets, transactions, broadcasts, balance, testBalance,
+      login, logout, addAsset, updateAssetValue, tokenizeAsset, buyTokens, recallTokens
     }}>
       {children}
     </StateContext.Provider>

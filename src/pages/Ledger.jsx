@@ -1,7 +1,5 @@
-import React from 'react';
-import { useAppState } from '../context/StateContext';
-import { Database, ShieldCheck, User as UserIcon, ExternalLink, ArrowRightLeft } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { formatNumber } from '../lib/utils';
 
 const staggerContainer = {
   hidden: { opacity: 0 },
@@ -20,7 +18,7 @@ const staggerItem = {
 };
 
 const LedgerPage = () => {
-  const { transactions, user } = useAppState();
+  const { transactions, user, testMode } = useAppState();
 
   return (
     <motion.div variants={staggerContainer} initial="hidden" animate="show" className="animate-fade-in-disabled">
@@ -66,7 +64,7 @@ const LedgerPage = () => {
                   <ArrowRightLeft size={12} color="var(--text-muted)" />
                   <span style={{ fontWeight: 600 }}>{tx.to.substring(0, 6)}...</span>
                 </div>
-                <div style={{ fontWeight: 700 }}>${tx.amount.toLocaleString()}</div>
+                <div style={{ fontWeight: 700 }}>{testMode ? 'F$' : '$'}{formatNumber(tx.amount)}</div>
                 <div>
                   <span style={{ 
                     padding: '4px 8px', 

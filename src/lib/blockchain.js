@@ -18,15 +18,18 @@ const generateHash = (data) => {
 };
 
 export const blockchain = {
-  addTransaction: async (from, to, amount, assetId, type = 'TRANSFER') => {
+  addTransaction: async (from, to, amount, assetId, type = 'TRANSFER', metadata = {}) => {
     const tx = {
       from,
       to,
       amount,
       assetId,
       type,
+      metadata,
       timestamp: Date.now(),
-      status: 'VERIFIED'
+      status: 'VERIFIED',
+      blockNumber: Math.floor(Date.now() / 1000) - 1700000000,
+      protocolVersion: '2.1.0'
     };
 
     // Calculate a simulated hash for the transaction
