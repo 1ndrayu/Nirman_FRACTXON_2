@@ -109,3 +109,13 @@ You're about to initialize a Firebase project in this directory:
 [info] i  Using project fractxon (FRACTXON) . 
 [info] 
 === Hosting Setup
+[debug] [2026-04-16T02:13:09.165Z] Checked if tokens are valid: true, expires at: 1776308309591
+[debug] [2026-04-16T02:13:09.165Z] Checked if tokens are valid: true, expires at: 1776308309591
+[debug] [2026-04-16T02:13:09.165Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/fractxon [none]
+[debug] [2026-04-16T02:13:09.579Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/fractxon 200
+[debug] [2026-04-16T02:13:09.580Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/fractxon {"projectId":"fractxon","projectNumber":"860802686971","displayName":"FRACTXON","name":"projects/fractxon","resources":{"hostingSite":"fractxon"},"state":"ACTIVE","etag":"1_5b8492cc-8e4f-4fbe-a8d6-46a96ffe6af1"}
+[info] 
+[info] Your public directory is the folder (relative to your project directory) that
+[info] will contain Hosting assets to be uploaded with firebase deploy. If you
+[info] have a build process for your assets, use your build's output directory.
+[info] 
