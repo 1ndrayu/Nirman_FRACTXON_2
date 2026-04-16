@@ -1,85 +1,217 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { 
+  auth, 
+  db, 
+  googleProvider, 
+  signInWithPopup, 
+  signOut 
+} from '../lib/firebase';
+import { 
+  onAuthStateChanged 
+} from 'firebase/auth';
+import { 
+  collection, 
+  onSnapshot, 
+  doc, 
+  setDoc, 
+  getDoc, 
+  updateDoc,
+  query,
+  orderBy,
+  limit,
+  addDoc,
+  serverTimestamp
+} from 'firebase/firestore';
 import { blockchain } from '../lib/blockchain';
 
 const StateContext = createContext();
 
 export const StateProvider = ({ children }) => {
-  const [mode, setMode] = useState('business'); // 'business' or 'investor'
-  const [assets, setAssets] = useState(() => {
-    const saved = localStorage.getItem('fractxon_assets');
-    return saved ? JSON.parse(saved) : [];
-  });
-  const [investmentPortfolio, setInvestmentPortfolio] = useState(() => {
-    const saved = localStorage.getItem('fractxon_portfolio');
-    return saved ? JSON.parse(saved) : [];
-  });
-  const [balance, setBalance] = useState(1000000); // Initial dummy balance
+  const [user, setUser] = useState(null);
+  const [profile, setProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [mode, setMode] = useState('investor'); // Default role
+  const [assets, setAssets] = useState([]);
+  const [transactions, setTransactions] = useState([]);
+  const [broadcasts, setBroadcasts] = useState([]);
+  const [balance, setBalance] = useState(1000000);
 
+  // 1. Authentication Listener
   useEffect(() => {
-    localStorage.setItem('fractxon_assets', JSON.stringify(assets));
-    localStorage.setItem('fractxon_portfolio', JSON.stringify(investmentPortfolio));
-  }, [assets, investmentPortfolio]);
-
-  const tokenizeAsset = (assetId, tokenCount) => {
-    setAssets(prev => prev.map(asset => {
-      if (asset.id === assetId) {
-        const tokenPrice = asset.value / tokenCount;
-        return {
-          ...asset,
-          isTokenized: true,
-          tokenCount,
-          tokenPrice,
-          availableTokens: tokenCount,
-          tokensSold: 0
-        };
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        setUser(user);
+        // Create or fetch profile
+        const profileRef = doc(db, 'users', user.uid);
+        const profileSnap = await getDoc(profileRef);
+        
+        if (!profileSnap.exists()) {
+          const newProfile = {
+            uid: user.uid,
+            displayName: user.displayName,
+            email: user.email,
+            photoURL: user.photoURL,
+            role: 'investor', // default
+            balance: 1000000,
+            createdAt: serverTimestamp()
+          };
+          await setDoc(profileRef, newProfile);
+          setProfile(newProfile);
+          setMode('investor');
+          setBalance(1000000);
+        } else {
+          const data = profileSnap.data();
+          setProfile(data);
+          setMode(data.role || 'investor');
+          setBalance(data.balance || 0);
+        }
+      } else {
+        setUser(null);
+        setProfile(null);
       }
-      return asset;
-    }));
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  // 2. Real-time Assets Listener
+  useEffect(() => {
+    const q = query(collection(db, 'assets'), orderBy('timestamp', 'desc'));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const assetsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setAssets(assetsData);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // 3. Real-time Transactions (Master Ledger) Listener
+  useEffect(() => {
+    const q = query(collection(db, 'transactions'), orderBy('timestamp', 'desc'), limit(50));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const txData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setTransactions(txData);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // 4. Real-time Broadcasts Listener
+  useEffect(() => {
+    const q = query(collection(db, 'broadcasts'), orderBy('timestamp', 'desc'), limit(10));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const broadcastData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setBroadcasts(broadcastData);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // Actions
+  const login = async () => {
+    try {
+      await signInWithPopup(auth, googleProvider);
+    } catch (error) {
+      console.error("Login Failed:", error);
+    }
   };
 
-  const buyTokens = (assetId, count) => {
+  const logout = () => signOut(auth);
+
+  const toggleMode = async () => {
+    const newMode = mode === 'business' ? 'investor' : 'business';
+    setMode(newMode);
+    if (user) {
+      await updateDoc(doc(db, 'users', user.uid), { role: newMode });
+    }
+  };
+
+  const addAsset = async (assetData) => {
+    if (!user) return;
+    const newAsset = {
+      ...assetData,
+      ownerId: user.uid,
+      isTokenized: false,
+      timestamp: Date.now()
+    };
+    await addDoc(collection(db, 'assets'), newAsset);
+  };
+
+  const updateAssetValue = async (assetId, newValue) => {
+    const assetRef = doc(db, 'assets', assetId);
     const asset = assets.find(a => a.id === assetId);
-    if (!asset || asset.availableTokens < count) return false;
+    
+    await updateDoc(assetRef, { 
+      value: parseFloat(newValue),
+      tokenPrice: asset.isTokenized ? parseFloat(newValue) / asset.tokenCount : 0
+    });
+
+    // Create Broadcast
+    await addDoc(collection(db, 'broadcasts'), {
+      type: 'VALUE_UPDATE',
+      assetName: asset.name,
+      oldValue: asset.value,
+      newValue: parseFloat(newValue),
+      timestamp: Date.now(),
+      author: user.displayName
+    });
+  };
+
+  const tokenizeAsset = async (assetId, tokenCount) => {
+    const asset = assets.find(a => a.id === assetId);
+    if (!asset) return;
+    
+    const tokenPrice = asset.value / tokenCount;
+    await updateDoc(doc(db, 'assets', assetId), {
+      isTokenized: true,
+      tokenCount,
+      tokenPrice,
+      availableTokens: tokenCount,
+      tokensSold: 0
+    });
+  };
+
+  const buyTokens = async (assetId, count) => {
+    const asset = assets.find(a => a.id === assetId);
+    if (!asset || asset.availableTokens < count || !user) return false;
 
     const totalCost = asset.tokenPrice * count;
     if (balance < totalCost) return false;
 
-    // Update Blockchain
-    blockchain.addTransaction('Investor_01', asset.businessName, totalCost, assetId);
-
-    // Update Assets
-    setAssets(prev => prev.map(a => {
-      if (a.id === assetId) {
-        return {
-          ...a,
-          availableTokens: a.availableTokens - count,
-          tokensSold: a.tokensSold + count
-        };
-      }
-      return a;
-    }));
-
-    // Update Portfolio
-    setInvestmentPortfolio(prev => {
-      const existing = prev.find(p => p.assetId === assetId);
-      if (existing) {
-        return prev.map(p => p.assetId === assetId ? { ...p, count: p.count + count } : p);
-      }
-      return [...prev, { assetId, assetName: asset.name, count, buyPrice: asset.tokenPrice }];
+    // 1. Update Asset
+    await updateDoc(doc(db, 'assets', assetId), {
+      availableTokens: asset.availableTokens - count,
+      tokensSold: (asset.tokensSold || 0) + count
     });
 
-    setBalance(prev => prev - totalCost);
+    // 2. Add to Ledger (Blockchain)
+    await blockchain.addTransaction(user.uid, asset.ownerId, totalCost, assetId, 'TOKEN_PURCHASE');
+
+    // 3. Update User Balance
+    const newBalance = balance - totalCost;
+    await updateDoc(doc(db, 'users', user.uid), { balance: newBalance });
+    setBalance(newBalance);
+
+    // 4. Update Portfolio (Saved in user sub-collection)
+    const portfolioRef = doc(db, 'users', user.uid, 'portfolio', assetId);
+    const portfolioSnap = await getDoc(portfolioRef);
+    if (portfolioSnap.exists()) {
+      await updateDoc(portfolioRef, { count: portfolioSnap.data().count + count });
+    } else {
+      await setDoc(portfolioRef, { 
+        assetId, 
+        assetName: asset.name, 
+        count, 
+        buyPrice: asset.tokenPrice 
+      });
+    }
+
     return true;
   };
 
   return (
     <StateContext.Provider value={{
-      mode, setMode,
-      assets, setAssets,
-      investmentPortfolio,
-      balance,
-      tokenizeAsset,
-      buyTokens
+      user, profile, loading, mode, setMode: toggleMode,
+      assets, transactions, broadcasts, balance,
+      login, logout, addAsset, updateAssetValue, tokenizeAsset, buyTokens
     }}>
       {children}
     </StateContext.Provider>

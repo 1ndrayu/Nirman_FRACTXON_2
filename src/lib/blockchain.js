@@ -1,6 +1,9 @@
+import { db } from './firebase';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+
 /**
  * Simulated Master Chain for FRACTXON_
- * This utility mocks blockchain behavior such as hashing and block creation.
+ * This utility mocks blockchain behavior while persisting data to Firestore.
  */
 
 const generateHash = (data) => {
@@ -15,36 +18,33 @@ const generateHash = (data) => {
 };
 
 export const blockchain = {
-  chain: [],
-  
-  createBlock: (transactions, previousHash = '0'.repeat(64)) => {
-    const block = {
-      timestamp: Date.now(),
-      transactions,
-      previousHash,
-      hash: ''
-    };
-    block.hash = generateHash(block);
-    return block;
-  },
-
-  addTransaction: (from, to, amount, assetId) => {
+  addTransaction: async (from, to, amount, assetId, type = 'TRANSFER') => {
     const tx = {
-      id: Math.random().toString(36).substring(7),
       from,
       to,
       amount,
       assetId,
-      timestamp: Date.now()
+      type,
+      timestamp: Date.now(),
+      status: 'VERIFIED'
     };
-    
-    // In a real blockchain, we'd wait for mining. 
-    // Here we just simulate adding it to the ledger.
-    console.log(`[Blockchain] New Transaction: ${tx.id}`, tx);
-    return tx;
-  },
 
-  getLatestBlock: () => {
-    return blockchain.chain[blockchain.chain.length - 1];
+    // Calculate a simulated hash for the transaction
+    const hash = generateHash(tx);
+    const completeTx = { ...tx, hash };
+
+    try {
+      // Persist to Master Ledger in Firestore
+      await addDoc(collection(db, 'transactions'), {
+        ...completeTx,
+        serverTime: serverTimestamp()
+      });
+      
+      console.log(`[Blockchain] New Transaction Persisted: ${hash}`);
+      return completeTx;
+    } catch (error) {
+      console.error("[Blockchain] Transaction Failed:", error);
+      throw error;
+    }
   }
 };
