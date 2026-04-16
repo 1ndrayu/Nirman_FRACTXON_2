@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { StateProvider, useAppState } from './context/StateContext';
 import { 
   Building2, 
@@ -352,11 +352,13 @@ const AppContent = () => {
   );
 };
 
-function App() {
+const AppWrapper = () => {
   const { mode } = useAppState();
 
   useEffect(() => {
-    document.body.className = `theme-${mode}`;
+    if (mode) {
+      document.body.className = `theme-${mode}`;
+    }
   }, [mode]);
 
   return (
@@ -364,6 +366,14 @@ function App() {
       <DottedMatrix />
       <AppContent />
     </>
+  );
+};
+
+function App() {
+  return (
+    <StateProvider>
+      <AppWrapper />
+    </StateProvider>
   );
 }
 
