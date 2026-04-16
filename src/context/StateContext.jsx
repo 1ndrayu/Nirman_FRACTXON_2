@@ -185,6 +185,7 @@ export const StateProvider = ({ children }) => {
     const reservedAmount = asset.isReserved ? (asset.reservedCount || 0) : 0;
     const initialAvailable = Math.max(0, tokenCount - reservedAmount);
 
+    const tokenPrice = asset.value / tokenCount;
     const updateData = {
       isTokenized: true,
       tokenCount,
