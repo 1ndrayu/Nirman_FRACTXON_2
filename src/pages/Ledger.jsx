@@ -1,5 +1,7 @@
 import { motion } from 'framer-motion';
 import { formatNumber } from '../lib/utils';
+import { useAppState } from '../context/StateContext';
+import { Database, ArrowRightLeft, ShieldCheck, Link as LinkIcon } from 'lucide-react';
 
 const staggerContainer = {
   hidden: { opacity: 0 },
@@ -40,14 +42,14 @@ const LedgerPage = () => {
           borderBottom: '1px solid var(--border-light)'
         }}>
           <span>Block Hash</span>
+          <span>Asset / Path</span>
           <span>From / To</span>
           <span>Amount</span>
-          <span>Type</span>
           <span>Status</span>
         </div>
 
         <motion.div variants={staggerContainer} initial="hidden" animate="show" style={{ maxHeight: '600px', overflowY: 'auto' }}>
-          {transactions.map(tx => {
+          {(transactions || []).map(tx => {
             const isUserInvolved = user && (tx.from === user.uid || tx.to === user.uid);
             return (
               <motion.div 
@@ -55,29 +57,31 @@ const LedgerPage = () => {
                 key={tx.id} 
                 className={`ledger-row ${isUserInvolved ? 'tx-highlight' : ''}`}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-muted)', fontFamily: 'monospace' }}>
-                  <Database size={14} />
-                  {tx.hash.substring(0, 10)}...
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-muted)', fontFamily: 'monospace', fontSize: '0.8rem' }}>
+                    <ShieldCheck size={14} color="var(--accent-primary)" />
+                    {tx.hash?.substring(0, 14) || '0xPENDING...'}
+                  </div>
+                  <div style={{ fontSize: '0.65rem', color: 'rgba(0,0,0,0.3)', fontFamily: 'monospace', paddingLeft: '22px' }}>
+                    Link: {tx.previousBlockHash?.substring(0, 10) || '0x000...'}
+                  </div>
                 </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <span style={{ fontWeight: 700, fontSize: '0.85rem' }}>{(tx.tokenID || tx.assetId)?.substring(0, 8) || 'N/A'}...</span>
+                  <span style={{ fontSize: '0.65rem', opacity: 0.6 }}>{tx.type}</span>
+                </div>
+
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <span style={{ fontWeight: 600 }}>{tx.from.substring(0, 6)}...</span>
+                  <span style={{ fontWeight: 600 }}>{(tx.senderPublicKey || tx.from)?.substring(0, 6) || 'SYSTEM'}...</span>
                   <ArrowRightLeft size={12} color="var(--text-muted)" />
-                  <span style={{ fontWeight: 600 }}>{tx.to.substring(0, 6)}...</span>
+                  <span style={{ fontWeight: 600 }}>{(tx.recipientPublicKey || tx.to)?.substring(0, 6) || 'SYSTEM'}...</span>
                 </div>
-                <div style={{ fontWeight: 700 }}>{testMode ? 'F$' : '$'}{formatNumber(tx.amount)}</div>
-                <div>
-                  <span style={{ 
-                    padding: '4px 8px', 
-                    borderRadius: '4px', 
-                    background: 'var(--bg-surface)', 
-                    fontSize: '0.7rem',
-                    fontWeight: 700
-                  }}>
-                    {tx.type}
-                  </span>
-                </div>
+
+                <div style={{ fontWeight: 700 }}>{testMode ? 'F$' : '$'}{formatNumber(tx.amount || 0)}</div>
+
                 <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#059669', fontWeight: 700 }}>
-                  <ShieldCheck size={14} /> Verified
+                  <ShieldCheck size={14} /> IMMUTABLE
                 </div>
               </motion.div>
             );

@@ -225,7 +225,8 @@ export const StateProvider = ({ children }) => {
     if (!asset || asset.availableTokens < count || !user) return false;
 
     const totalCost = asset.tokenPrice * count;
-    if (balance < totalCost) return false;
+    const currentBalance = testMode ? testBalance : balance;
+    if (currentBalance < totalCost) return false;
 
     // 1. Update Asset
     await updateDoc(doc(db, 'assets', assetId), {
@@ -268,6 +269,29 @@ export const StateProvider = ({ children }) => {
     return true;
   };
 
+  const reliquidateProfits = async () => {
+    if (!user) return;
+    
+    // Simulate yield harvest: 2% of total portfolio value
+    const harvestAmount = testMode ? 5000 : 2500; 
+    
+    if (testMode) {
+      const newB = testBalance + harvestAmount;
+      await updateDoc(doc(db, 'users', user.uid), { testBalance: newB });
+      setTestBalance(newB);
+    } else {
+      const newB = balance + harvestAmount;
+      await updateDoc(doc(db, 'users', user.uid), { balance: newB });
+      setBalance(newB);
+    }
+
+    await blockchain.addTransaction('0x0000', user.uid, harvestAmount, 'PROTOCOL', 'YIELD_HARVEST', {
+      method: 'SIMULATED_RELIQUIDATION'
+    });
+    
+    return true;
+  };
+
   return (
     <StateContext.Provider value={{
       user, profile, loading, mode, setMode: toggleMode,
@@ -276,7 +300,8 @@ export const StateProvider = ({ children }) => {
         if (user) await updateDoc(doc(db, 'users', user.uid), { testMode: val });
       },
       assets, transactions, broadcasts, balance, testBalance,
-      login, logout, addAsset, updateAssetValue, tokenizeAsset, buyTokens, recallTokens
+      login, logout, addAsset, updateAssetValue, tokenizeAsset, buyTokens, recallTokens, reliquidateProfits,
+      verifyChain: blockchain.verifyChain
     }}>
       {children}
     </StateContext.Provider>

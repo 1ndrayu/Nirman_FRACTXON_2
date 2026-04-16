@@ -373,7 +373,7 @@ const BusinessInterface = () => {
 };
 
 const InvestorInterface = () => {
-  const { assets, balance, testBalance, buyTokens, testMode } = useAppState();
+  const { assets, balance, testBalance, buyTokens, testMode, reliquidateProfits } = useAppState();
   const [activeAssetId, setActiveAssetId] = useState(null);
   const [purchaseCount, setPurchaseCount] = useState('10');
   const [paymentTab, setPaymentTab] = useState('balance');
@@ -518,6 +518,7 @@ const InvestorInterface = () => {
                 whileTap={{ scale: 0.97 }}
                 className="btn btn-primary" 
                 style={{ width: '100%', justifyContent: 'center', padding: '16px' }}
+                onClick={() => reliquidateProfits()}
               >
                 Re-Liquidate Profits
               </motion.button>
