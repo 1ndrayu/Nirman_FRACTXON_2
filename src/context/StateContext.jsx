@@ -36,7 +36,7 @@ export const StateProvider = ({ children }) => {
   const [transactions, setTransactions] = useState([]);
   const [broadcasts, setBroadcasts] = useState([]);
   const [balance, setBalance] = useState(0);
-  const [testBalance, setTestBalance] = useState(0);
+  const [testBalance, setTestBalance] = useState(10000);
   const [portfolio, setPortfolio] = useState([]);
 
   // 1. Authentication Listener
@@ -56,14 +56,14 @@ export const StateProvider = ({ children }) => {
             photoURL: user.photoURL,
             role: 'investor', // default
             balance: 0,
-            testBalance: 0,
+            testBalance: 10000,
             createdAt: serverTimestamp()
           };
           await setDoc(profileRef, newProfile);
           setProfile(newProfile);
           setMode('investor');
           setBalance(0);
-          setTestBalance(0);
+          setTestBalance(10000);
         } else {
           const data = profileSnap.data();
           setProfile(data);
