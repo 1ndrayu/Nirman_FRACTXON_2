@@ -65,9 +65,15 @@ const ProfilePage = () => {
               </div>
             </div>
 
-            <button onClick={logout} className="btn btn-secondary" style={{ width: '100%', justifyContent: 'center', color: '#ef4444', borderColor: '#ef4444' }}>
+            <motion.button 
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={logout} 
+              className="btn btn-secondary" 
+              style={{ width: '100%', justifyContent: 'center', color: '#ef4444', borderColor: '#ef4444' }}
+            >
               <LogOut size={18} /> Sign Out of Protocol
-            </button>
+            </motion.button>
           </div>
 
           <div className="box-panel" style={{ padding: '24px', background: 'var(--accent-gradient)', color: 'white' }}>
@@ -115,7 +121,14 @@ const ProfilePage = () => {
               <div style={{ fontWeight: 600 }}>Default Issuer Entity</div>
               <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{user.displayName} Partners LLC</div>
             </div>
-            <button className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: '0.75rem' }}>Edit</button>
+            <motion.button 
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="btn btn-secondary" 
+              style={{ padding: '6px 12px', fontSize: '0.75rem' }}
+            >
+              Edit
+            </motion.button>
           </div>
         </motion.div>
       </div>

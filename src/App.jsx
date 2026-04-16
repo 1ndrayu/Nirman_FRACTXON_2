@@ -58,7 +58,14 @@ const LoginView = () => {
         <motion.p variants={staggerItem} style={{ color: 'var(--text-muted)', marginBottom: '40px' }}>
           Secure, transparent asset tokenization powered by a decentralized master-chain ledger.
         </motion.p>
-        <motion.button variants={staggerItem} className="btn btn-primary" onClick={login} style={{ fontSize: '1.1rem', padding: '16px 32px' }}>
+        <motion.button 
+          variants={staggerItem} 
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          className="btn btn-primary" 
+          onClick={login} 
+          style={{ fontSize: '1.1rem', padding: '16px 32px' }}
+        >
           Sign in with Google Account
         </motion.button>
       </motion.div>
@@ -91,7 +98,13 @@ const BusinessInterface = () => {
           <h2 style={{ fontSize: '2.5rem', fontWeight: 900 }}>Business <span className="gradient-text">Vault</span></h2>
           <p style={{ color: 'var(--text-muted)' }}>Manage your asset registry and tokenization strategies.</p>
         </motion.div>
-        <motion.button variants={staggerItem} className="btn btn-primary" onClick={() => setShowForm(true)}>
+        <motion.button 
+          variants={staggerItem} 
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          className="btn btn-primary" 
+          onClick={() => setShowForm(true)}
+        >
           <Plus size={20} /> Register New Asset
         </motion.button>
       </div>
@@ -185,7 +198,9 @@ const BusinessInterface = () => {
             </div>
 
             {!asset.isTokenized ? (
-              <button 
+              <motion.button 
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
                 className="btn btn-primary" 
                 style={{ width: '100%', justifyContent: 'center', marginTop: '12px' }}
                 onClick={() => {
@@ -194,9 +209,9 @@ const BusinessInterface = () => {
                 }}
               >
                 <Database size={18} /> Initiate Asset Tokenization
-              </button>
+              </motion.button>
             ) : (
-              <div style={{ padding: '16px', background: '#f9fafb', borderRadius: '12px', border: '1px solid var(--border-light)' }}>
+              <div style={{ padding: '16px', background: 'var(--bg-page)', borderRadius: '12px', border: '1px solid var(--border-light)' }}>
                 <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '8px', fontWeight: 700, textTransform: 'uppercase' }}>Consensus Pool</div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span style={{ fontSize: '1.2rem', fontWeight: 900 }}>{asset.tokenCount.toLocaleString()} FTNK</span>
@@ -253,7 +268,9 @@ const InvestorInterface = () => {
                   </div>
                 </div>
 
-                <button 
+                <motion.button 
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
                   className="btn btn-secondary" 
                   style={{ width: '100%', justifyContent: 'center', borderColor: 'var(--accent-primary)', color: 'var(--accent-primary)', fontWeight: 700 }}
                   onClick={() => {
@@ -262,7 +279,7 @@ const InvestorInterface = () => {
                   }}
                 >
                   Acquire Stake <ArrowRight size={16} />
-                </button>
+                </motion.button>
               </motion.div>
             ))}
           </motion.div>
@@ -281,9 +298,14 @@ const InvestorInterface = () => {
 
             <div className="divider" style={{ margin: '24px 0' }} />
             
-            <button className="btn btn-primary" style={{ width: '100%', justifyContent: 'center', padding: '16px' }}>
+            <motion.button 
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+              className="btn btn-primary" 
+              style={{ width: '100%', justifyContent: 'center', padding: '16px' }}
+            >
               Re-Liquidate Profits
-            </button>
+            </motion.button>
           </div>
         </motion.div>
       </div>
@@ -326,9 +348,9 @@ const AppContent = () => {
         </nav>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-          <div className="box-panel" style={{ padding: '6px 16px', borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.8rem', background: '#f0fdf4', border: 'none' }}>
-            <Activity size={14} color="#059669" />
-            <span style={{ color: '#059669', fontWeight: 700 }}>Chain Online</span>
+          <div className="box-panel" style={{ padding: '6px 16px', borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.8rem', background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+            <Activity size={14} color="#10b981" />
+            <span style={{ color: '#10b981', fontWeight: 700 }}>Chain Online</span>
           </div>
           <img 
             src={user.photoURL} 

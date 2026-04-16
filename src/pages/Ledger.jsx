@@ -31,7 +31,7 @@ const LedgerPage = () => {
 
       <div className="box-panel" style={{ overflow: 'hidden' }}>
         <div style={{ 
-          background: '#f9fafb', 
+          background: 'var(--bg-surface)', 
           padding: '16px', 
           display: 'grid', 
           gridTemplateColumns: '1fr 2fr 1fr 1fr 1fr',
