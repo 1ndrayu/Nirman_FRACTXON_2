@@ -35,8 +35,8 @@ export const StateProvider = ({ children }) => {
   const [assets, setAssets] = useState([]);
   const [transactions, setTransactions] = useState([]);
   const [broadcasts, setBroadcasts] = useState([]);
-  const [balance, setBalance] = useState(1000000);
-  const [testBalance, setTestBalance] = useState(1000000);
+  const [balance, setBalance] = useState(0);
+  const [testBalance, setTestBalance] = useState(0);
   const [portfolio, setPortfolio] = useState([]);
 
   // 1. Authentication Listener
@@ -55,13 +55,15 @@ export const StateProvider = ({ children }) => {
             email: user.email,
             photoURL: user.photoURL,
             role: 'investor', // default
-            balance: 1000000,
+            balance: 0,
+            testBalance: 0,
             createdAt: serverTimestamp()
           };
           await setDoc(profileRef, newProfile);
           setProfile(newProfile);
           setMode('investor');
-          setBalance(1000000);
+          setBalance(0);
+          setTestBalance(0);
         } else {
           const data = profileSnap.data();
           setProfile(data);
@@ -180,13 +182,16 @@ export const StateProvider = ({ children }) => {
     const asset = assets.find(a => a.id === assetId);
     if (!asset) return;
     
-    const tokenPrice = asset.value / tokenCount;
+    const reservedAmount = asset.isReserved ? (asset.reservedCount || 0) : 0;
+    const initialAvailable = Math.max(0, tokenCount - reservedAmount);
+
     const updateData = {
       isTokenized: true,
       tokenCount,
       tokenPrice,
-      availableTokens: tokenCount,
-      tokensSold: 0
+      availableTokens: initialAvailable,
+      tokensSold: 0,
+      reservedCount: reservedAmount
     };
     
     await updateDoc(doc(db, 'assets', assetId), updateData);
@@ -329,6 +334,17 @@ export const StateProvider = ({ children }) => {
     return { success: true, amount: totalHarvest };
   };
 
+  const updateTestBalance = async (amount) => {
+    if (!user) return;
+    const newB = testBalance + parseFloat(amount);
+    await updateDoc(doc(db, 'users', user.uid), { testBalance: newB });
+    setTestBalance(newB);
+    
+    await blockchain.addTransaction('0x0000', user.uid, amount, 'PROTOCOL', 'VAULT_ADJUSTMENT', {
+      type: 'SIMULATED_FUNDING'
+    });
+  };
+
   return (
     <StateContext.Provider value={{
       user, profile, loading, mode, setMode: toggleMode,
@@ -338,6 +354,7 @@ export const StateProvider = ({ children }) => {
       },
       assets, transactions, broadcasts, balance, testBalance, portfolio,
       login, logout, addAsset, updateAssetValue, tokenizeAsset, buyTokens, recallTokens, reliquidateProfits,
+      updateTestBalance,
       verifyChain: blockchain.verifyChain
     }}>
       {children}

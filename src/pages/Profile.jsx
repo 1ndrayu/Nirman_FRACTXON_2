@@ -30,7 +30,8 @@ const staggerItem = {
 };
 
 const ProfilePage = () => {
-  const { user, profile, mode, setMode, logout, balance } = useAppState();
+  const { user, profile, mode, setMode, logout, balance, testBalance, testMode, updateTestBalance } = useAppState();
+  const [vaultAmount, setVaultAmount] = React.useState('10000');
 
   if (!user) return null;
 
@@ -76,12 +77,45 @@ const ProfilePage = () => {
             </motion.button>
           </div>
 
-          <div className="box-panel" style={{ padding: '24px', background: 'var(--accent-gradient)', color: 'white' }}>
-            <h3 style={{ marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <CreditCard size={20} /> Vault Balance
+          <div className="box-panel" style={{ padding: '24px' }}>
+            <h3 style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Briefcase size={20} color="var(--accent-primary)" /> Protocol Capital
             </h3>
-            <div style={{ fontSize: '2.5rem', fontWeight: 900 }}>${balance.toLocaleString()}</div>
-            <p style={{ fontSize: '0.8rem', marginTop: '8px', opacity: 0.9 }}>Available for cross-asset deployment</p>
+            
+            <div style={{ marginBottom: '24px' }}>
+              <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600 }}>{testMode ? 'F$' : 'USD'} Unallocated Funds</div>
+              <div style={{ fontSize: '2rem', fontWeight: 900 }}>{testMode ? 'F$' : '$'}{(testMode ? testBalance : balance).toLocaleString()}</div>
+            </div>
+
+            <div className="divider" style={{ margin: '20px 0' }} />
+
+            {testMode ? (
+              <div className="vault-management">
+                <h4 style={{ fontSize: '0.9rem', marginBottom: '12px', color: 'var(--accent-primary)', fontWeight: 800 }}>VAULT MANAGEMENT</h4>
+                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '16px' }}>Adjust simulated protocol reserves for architectural testing.</p>
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  <input 
+                    className="input-field" style={{ marginBottom: 0, flex: 1 }}
+                    value={vaultAmount}
+                    onChange={e => setVaultAmount(e.target.value)}
+                    placeholder="Simulated Amount (F$)"
+                  />
+                  <button 
+                    className="btn btn-primary" 
+                    style={{ padding: '0 20px' }}
+                    onClick={() => updateTestBalance(vaultAmount)}
+                  >
+                    Adjust F$
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div style={{ padding: '20px', background: 'var(--bg-surface)', borderRadius: '12px', border: '1px solid var(--border-light)', textAlign: 'center', opacity: 0.6 }}>
+                <Shield size={24} style={{ margin: '0 auto 12px', display: 'block' }} />
+                <p style={{ fontSize: '0.75rem', fontWeight: 600 }}>REAL-WORLD SETTLEMENT ACTIVE</p>
+                <p style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>Manual vault adjustments are restricted in live production mode.</p>
+              </div>
+            )}
           </div>
         </motion.div>
 
