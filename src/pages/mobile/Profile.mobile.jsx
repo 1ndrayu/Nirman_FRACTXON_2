@@ -30,29 +30,44 @@ const ProfileMobile = () => {
         {/* Protocol Capital */}
         <div className="box-panel" style={{ padding: '20px' }}>
           <h3 style={{ fontSize: '1rem', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Briefcase size={18} color="var(--accent-primary)" /> Capital
+            <Briefcase size={18} color="var(--accent-primary)" /> Balance
           </h3>
           <div style={{ fontSize: '1.8rem', fontWeight: 900 }}>
             {testMode ? 'F$' : '$'}{(testMode ? testBalance : balance).toLocaleString()}
           </div>
-          <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '4px' }}>Unallocated Funds</p>
+          <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '4px' }}>{testMode ? 'Test Funds' : 'Available Balance'}</p>
           
           {testMode && (
             <div style={{ marginTop: '20px', paddingTop: '20px', borderTop: '1px solid var(--border-light)' }}>
-              <div style={{ display: 'flex', gap: '8px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 <input 
-                  className="input-field" style={{ marginBottom: 0, height: '44px', flex: 1 }}
-                  value={vaultAmount}
-                  onChange={e => setVaultAmount(e.target.value)}
-                  placeholder="F$ Amount"
+                   className="input-field" style={{ marginBottom: 0, height: '44px' }}
+                   value={vaultAmount}
+                   onChange={e => setVaultAmount(e.target.value)}
+                   placeholder="Enter F$ amount"
                 />
-                <button 
-                  className="btn btn-primary" 
-                  onClick={() => updateTestBalance(vaultAmount)}
-                  style={{ height: '44px', padding: '0 12px' }}
-                >
-                  Adjust
-                </button>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button 
+                    className="btn btn-primary" 
+                    onClick={() => {
+                        updateTestBalance(vaultAmount);
+                        setVaultAmount('10000');
+                    }}
+                    style={{ flex: 1, height: '44px', justifyContent: 'center' }}
+                  >
+                    Add
+                  </button>
+                  <button 
+                    className="btn btn-secondary" 
+                    onClick={() => {
+                        updateTestBalance(-parseFloat(vaultAmount));
+                        setVaultAmount('10000');
+                    }}
+                    style={{ flex: 1, height: '44px', justifyContent: 'center', color: '#ef4444', borderColor: '#ef4444' }}
+                  >
+                    Remove
+                  </button>
+                </div>
               </div>
             </div>
           )}
@@ -65,7 +80,7 @@ const ProfileMobile = () => {
           </h3>
           
           <div style={{ marginBottom: '24px' }}>
-            <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '12px' }}>INTERFACE MODE</label>
+            <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '12px' }}>DASHBOARD TYPE</label>
             <div className="interface-toggle" onClick={() => setMode()} style={{ width: '100%' }}>
               <div className="toggle-slider" style={{ 
                 left: mode === 'business' ? '4px' : 'calc(50% + 0px)', 
@@ -89,13 +104,13 @@ const ProfileMobile = () => {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
           <div className="box-panel" style={{ padding: '16px' }}>
             <Shield size={20} color="var(--accent-primary)" style={{ marginBottom: '8px' }} />
-            <div style={{ fontWeight: 700, fontSize: '0.8rem' }}>KYC</div>
+            <div style={{ fontWeight: 700, fontSize: '0.8rem' }}>Account</div>
             <div style={{ fontSize: '0.7rem', color: '#059669', fontWeight: 600 }}>Verified</div>
           </div>
           <div className="box-panel" style={{ padding: '16px' }}>
             <Building2 size={20} color="var(--accent-primary)" style={{ marginBottom: '8px' }} />
-            <div style={{ fontWeight: 700, fontSize: '0.8rem' }}>Tier</div>
-            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Principal</div>
+            <div style={{ fontWeight: 700, fontSize: '0.8rem' }}>Type</div>
+            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Standard</div>
           </div>
         </div>
       </div>

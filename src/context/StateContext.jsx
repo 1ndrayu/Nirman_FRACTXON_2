@@ -36,7 +36,7 @@ export const StateProvider = ({ children }) => {
   const [transactions, setTransactions] = useState([]);
   const [broadcasts, setBroadcasts] = useState([]);
   const [balance, setBalance] = useState(0);
-  const [testBalance, setTestBalance] = useState(10000);
+  const [testBalance, setTestBalance] = useState(100000);
   const [portfolio, setPortfolio] = useState([]);
 
   // 1. Authentication Listener
@@ -56,20 +56,20 @@ export const StateProvider = ({ children }) => {
             photoURL: user.photoURL,
             role: 'investor', // default
             balance: 0,
-            testBalance: 10000,
+            testBalance: 100000,
             createdAt: serverTimestamp()
           };
           await setDoc(profileRef, newProfile);
           setProfile(newProfile);
           setMode('investor');
           setBalance(0);
-          setTestBalance(10000);
+          setTestBalance(100000);
         } else {
           const data = profileSnap.data();
           setProfile(data);
           setMode(data.role || 'investor');
           setBalance(data.balance || 0);
-          setTestBalance(data.testBalance || 1000000);
+          setTestBalance(data.testBalance || 100000);
           setTestMode(data.testMode || false);
         }
       } else {
@@ -158,31 +158,51 @@ export const StateProvider = ({ children }) => {
     await addDoc(collection(db, 'assets'), newAsset);
   };
 
-  const updateAssetValue = async (assetId, newValue) => {
+  const updateAsset = async (assetId, updatedData) => {
     const assetRef = doc(db, 'assets', assetId);
     const asset = assets.find(a => a.id === assetId);
-    
-    await updateDoc(assetRef, { 
-      value: parseFloat(newValue),
-      tokenPrice: asset.isTokenized ? parseFloat(newValue) / asset.tokenCount : 0
-    });
+    if (!asset) return;
 
-    // Create Broadcast
-    await addDoc(collection(db, 'broadcasts'), {
-      type: 'VALUE_UPDATE',
-      assetName: asset.name,
-      oldValue: asset.value,
-      newValue: parseFloat(newValue),
-      timestamp: Date.now(),
-      author: user.displayName
-    });
+    const data = { ...updatedData };
+    if (data.value !== undefined) {
+      data.value = parseFloat(data.value);
+      data.lastValuation = Date.now();
+      data.tokenPrice = asset.isTokenized ? data.value / asset.tokenCount : 0;
+    }
+    if (data.cashflow !== undefined) {
+      data.cashflow = parseFloat(data.cashflow) || 0;
+    }
+
+    await updateDoc(assetRef, data);
+
+    // Create Broadcast if value changes
+    if (updatedData.value && parseFloat(updatedData.value) !== asset.value) {
+      await addDoc(collection(db, 'broadcasts'), {
+        type: 'VALUE_UPDATE',
+        assetName: asset.name,
+        oldValue: asset.value,
+        newValue: parseFloat(updatedData.value),
+        timestamp: Date.now(),
+        author: user.displayName || 'SYSTEM'
+      });
+    }
+  };
+
+  const updateAssetValue = async (assetId, newValue) => {
+    await updateAsset(assetId, { value: newValue });
+  };
+
+  const deleteAsset = async (assetId) => {
+    if (!user) return;
+    const assetRef = doc(db, 'assets', assetId);
+    await deleteDoc(assetRef);
   };
 
   const tokenizeAsset = async (assetId, tokenCount) => {
     const asset = assets.find(a => a.id === assetId);
     if (!asset) return;
     
-    const reservedAmount = asset.isReserved ? (asset.reservedCount || 0) : 0;
+    const reservedAmount = asset.isReserved ? Math.floor(tokenCount * ((asset.reservedPercentage || 0) / 100)) : 0;
     const initialAvailable = Math.max(0, tokenCount - reservedAmount);
 
     const tokenPrice = asset.value / tokenCount;
@@ -201,7 +221,8 @@ export const StateProvider = ({ children }) => {
     await blockchain.addTransaction('0x0000', user.uid, asset.value, assetId, 'TOKEN_ISSUANCE', {
       tokenCount,
       tokenPrice,
-      assetName: asset.name
+      assetName: asset.name,
+      category: asset.category || 'LAND'
     });
   };
 
@@ -271,7 +292,8 @@ export const StateProvider = ({ children }) => {
       // 2. Add to Ledger (Blockchain)
       await blockchain.addTransaction(user.uid, asset.ownerId, totalCost, assetId, 'TOKEN_PURCHASE', {
         tokenCount: count,
-        assetName: asset.name
+        assetName: asset.name,
+        category: asset.category || 'LAND'
       });
 
       // 3. Update User Balance
@@ -300,8 +322,8 @@ export const StateProvider = ({ children }) => {
       return { success: false, error: error.message };
     }
   };
-
-  const reliquidateProfits = async () => {
+  
+  const claimYield = async () => {
     if (!user || portfolio.length === 0) return { success: false, error: "No active holdings found." };
     
     // Calculate real-time yield: sum(owned_tokens * accrued_since_last_harvest)
@@ -354,7 +376,9 @@ export const StateProvider = ({ children }) => {
         if (user) await updateDoc(doc(db, 'users', user.uid), { testMode: val });
       },
       assets, transactions, broadcasts, balance, testBalance, portfolio,
-      login, logout, addAsset, updateAssetValue, tokenizeAsset, buyTokens, recallTokens, reliquidateProfits,
+      login, logout, addAsset, updateAsset, updateAssetValue, tokenizeAsset, buyTokens, recallTokens,
+      claimYield,
+      deleteAsset,
       updateTestBalance,
       verifyChain: blockchain.verifyChain
     }}>

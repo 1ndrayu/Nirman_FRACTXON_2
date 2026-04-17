@@ -29,7 +29,7 @@ const DottedMatrix = () => {
 
     const draw = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      
+
       const theme = document.body.className.includes('theme-business') ? 'business' : 'investor';
       ctx.fillStyle = theme === 'business' ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.05)';
 
@@ -40,20 +40,20 @@ const DottedMatrix = () => {
         for (let j = 0; j <= cols; j++) {
           const x = j * dotSpacing;
           const y = i * dotSpacing;
-          
+
           const dx = x - mouseRef.current.x;
           const dy = y - mouseRef.current.y;
           const distance = Math.sqrt(dx * dx + dy * dy);
-          
+
           let currentRadius = dotRadius;
           if (distance < effectRadius) {
             const scale = 1 + (growthFactor - 1) * (1 - distance / effectRadius);
             currentRadius = dotRadius * scale;
             // Add a slight color shift for dots near cursor
             if (theme === 'business') {
-                ctx.fillStyle = `rgba(255, 255, 255, ${0.15 + (1 - distance / effectRadius) * 0.2})`;
+              ctx.fillStyle = `rgba(255, 255, 255, ${0.15 + (1 - distance / effectRadius) * 0.2})`;
             } else {
-                ctx.fillStyle = `rgba(0, 0, 0, ${0.05 + (1 - distance / effectRadius) * 0.1})`;
+              ctx.fillStyle = `rgba(0, 0, 0, ${0.05 + (1 - distance / effectRadius) * 0.1})`;
             }
           } else {
             ctx.fillStyle = theme === 'business' ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.05)';
@@ -78,8 +78,8 @@ const DottedMatrix = () => {
   }, []);
 
   return (
-    <canvas 
-      ref={canvasRef} 
+    <canvas
+      ref={canvasRef}
       className="mouse-glow"
       style={{ opacity: 0.8 }}
     />
