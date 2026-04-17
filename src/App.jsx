@@ -140,7 +140,8 @@ const BusinessInterface = () => {
     setShowForm(false);
   };
 
-  const myAssets = assets.filter(a => a.ownerId === user?.uid && (testMode ? a.isTest : !a.isTest));
+  const myAssets = assets.filter(a => a.ownerId === user?.uid);
+  const currentModeAssets = (activeSubTab === 'vault' ? assets : myAssets).filter(a => testMode ? a.isTest : !a.isTest);
 
   return (
     <motion.div variants={staggerContainer} initial="hidden" animate="show">
@@ -362,7 +363,7 @@ const BusinessInterface = () => {
       </AnimatePresence>
 
       <motion.div key={activeSubTab} variants={staggerContainer} initial="hidden" animate="show" className="dashboard-grid">
-        {(activeSubTab === 'vault' ? assets : myAssets).filter(a => testMode ? a.isTest : !a.isTest).map(asset => (
+        {currentModeAssets.map(asset => (
           <div key={asset.id}>
             <motion.div
               variants={staggerItem}
@@ -607,10 +608,12 @@ const BusinessInterface = () => {
           </div>
         ))}
       </motion.div>
-      {activeSubTab === 'portfolio' && myAssets.length === 0 && (
+      
+      {currentModeAssets.length === 0 && (
         <div style={{ textAlign: 'center', padding: '100px 0', opacity: 0.5 }}>
           <PieChart size={48} style={{ marginBottom: '16px' }} />
-          <p>No assets registered to your vault yet.</p>
+          <p>No assets found in {testMode ? 'TEST' : 'REAL'} mode.</p>
+          <p style={{ fontSize: '0.8rem' }}>{activeSubTab === 'vault' ? 'The global vault is empty.' : 'You haven\'t registered any assets here yet.'}</p>
         </div>
       )}
 
@@ -707,11 +710,6 @@ const InvestorInterface = () => {
     }
   };
 
-  const myPortfolio = portfolio.map(item => {
-    const asset = assets.find(a => a.id === item.assetId);
-    return { ...item, asset };
-  }).filter(item => item.asset && (testMode ? item.asset.isTest : !item.asset.isTest));
-
   return (
     <motion.div variants={staggerContainer} initial="hidden" animate="show">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '32px' }}>
@@ -746,7 +744,17 @@ const InvestorInterface = () => {
       <AnimatePresence mode="wait">
         <motion.div key={activeSubTab} variants={staggerContainer} initial="hidden" animate="show" className="dashboard-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))' }}>
           {activeSubTab === 'exchange' ? (
-            assets.filter(a => a.isTokenized && (testMode ? a.isTest : !a.isTest)).map(asset => (
+            (() => {
+              const marketAssets = assets.filter(a => a.isTokenized && (testMode ? a.isTest : !a.isTest));
+              if (marketAssets.length === 0) {
+                return (
+                  <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '80px 0', opacity: 0.5 }}>
+                    <Database size={48} style={{ marginBottom: '16px' }} />
+                    <p>No tokenized assets available in {testMode ? 'TEST' : 'REAL'} mode.</p>
+                  </div>
+                );
+              }
+              return marketAssets.map(asset => (
               <div key={asset.id}>
                 <motion.div variants={staggerItem} className={`box-panel asset-card ${activeAssetId === asset.id ? 'expanded' : ''}`}>
                   <h3 style={{ marginBottom: '4px', fontWeight: 700 }}>{asset.name}</h3>
@@ -834,9 +842,24 @@ const InvestorInterface = () => {
                   )}
                 </AnimatePresence>
               </div>
-            ))
+            ));
+            })()
           ) : (
-            myPortfolio.map(item => (
+            (() => {
+              const portfolioAssets = portfolio.map(item => {
+                const asset = assets.find(a => a.id === item.assetId);
+                return { ...item, asset };
+              }).filter(item => item.asset && (testMode ? item.asset.isTest : !item.asset.isTest));
+
+              if (portfolioAssets.length === 0) {
+                return (
+                  <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '100px 0', opacity: 0.5 }}>
+                    <PieChart size={48} style={{ marginBottom: '16px', margin: '0 auto' }} />
+                    <p>Your {testMode ? 'TEST' : 'REAL'} portfolio is empty.</p>
+                  </div>
+                );
+              }
+              return portfolioAssets.map(item => (
               <motion.div variants={staggerItem} key={item.id} className="box-panel asset-card" style={{ borderLeft: '4px solid var(--accent-primary)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
                   <div>
@@ -869,16 +892,10 @@ const InvestorInterface = () => {
                   </div>
                 </div>
               </motion.div>
-            ))
-          )}
-          {activeSubTab === 'portfolio' && myPortfolio.length === 0 && (
-            <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '100px 0', opacity: 0.5 }}>
-              <PieChart size={48} style={{ marginBottom: '16px' }} />
-              <p>Your portfolio is currently empty.</p>
-              <button className="btn btn-primary" style={{ marginTop: '20px' }} onClick={() => setActiveSubTab('exchange')}>Browse Market</button>
-            </div>
-          )}
-        </motion.div>
+            ));
+          })()
+        )}
+      </motion.div>
       </AnimatePresence>
     </motion.div>
   );

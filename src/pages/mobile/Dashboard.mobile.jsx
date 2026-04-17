@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Building2, Database, Plus, ShieldCheck, ArrowRight, Trash2, AlertTriangle } from 'lucide-react';
+import { Building2, Database, Plus, ShieldCheck, ArrowRight, Trash2, AlertTriangle, PieChart } from 'lucide-react';
 import { useAppState } from '../../context/StateContext';
 import { ASSET_CATEGORIES } from '../../lib/constants';
 import { formatNumber } from '../../lib/utils';
@@ -55,7 +55,6 @@ const DashboardMobile = () => {
   const [tokenizeCount, setTokenizeCount] = useState('10000');
   const [purchaseCount, setPurchaseCount] = useState('10');
   const [recallCount, setRecallCount] = useState('');
-  const [editValue, setEditValue] = useState('');
   
   // Deletion state
   const [assetToDelete, setAssetToDelete] = useState(null);
@@ -69,20 +68,8 @@ const DashboardMobile = () => {
   };
 
   const currentAssets = assets.filter(a => testMode ? a.isTest : !a.isTest);
+  const myBusinessAssets = currentAssets.filter(a => a.ownerId === user?.uid);
   const investorAssets = currentAssets.filter(a => a.isTokenized);
-
-  const handleAddAsset = (e) => {
-    e.preventDefault();
-    addAsset({
-      ...newAsset,
-      value: parseFloat(newAsset.value.replace(/,/g, '')),
-      cashflow: parseFloat(newAsset.cashflow.replace(/,/g, '')) || 0,
-      isReserved: newAsset.isReserved,
-      reservedPercentage: parseFloat(newAsset.reservedPercentage) || 0
-    });
-    setNewAsset({ name: '', businessName: '', value: '', cashflow: '', category: 'LAND', metadata: {}, isReserved: false, reservedPercentage: '10' });
-    setShowRegister(false);
-  };
 
   return (
     <motion.div variants={staggerContainer} initial="hidden" animate="show">
@@ -110,37 +97,49 @@ const DashboardMobile = () => {
       )}
 
       <div style={{ paddingBottom: '20px' }}>
-        {(mode === 'business' ? currentAssets : investorAssets).map(asset => (
-          <MobileAssetCard 
-            key={asset.id}
-            asset={asset}
-            testMode={testMode}
-            isInvestor={mode === 'investor'}
-            onDelete={() => setAssetToDelete(asset)}
-            onEdit={() => {
-              setEditingAsset(asset);
-              setNewAsset({
-                name: asset.name,
-                businessName: asset.businessName,
-                value: asset.value.toString(),
-                cashflow: asset.cashflow.toString(),
-                category: asset.category || 'LAND',
-                metadata: asset.metadata || {},
-                isReserved: asset.isReserved || false,
-                reservedPercentage: asset.reservedPercentage?.toString() || '10'
-              });
-              setShowRegister(true);
-            }}
-            onAction={() => {
-              setActiveAsset(asset);
-              if (mode === 'investor') {
-                setDrawerMode('buy');
-              } else {
-                setDrawerMode(asset.isTokenized ? 'recall' : 'tokenize');
-              }
-            }}
-          />
-        ))}
+        {(() => {
+          const list = mode === 'business' ? myBusinessAssets : investorAssets;
+          if (list.length === 0) {
+            return (
+              <div style={{ textAlign: 'center', padding: '60px 20px', opacity: 0.5 }}>
+                <PieChart size={40} style={{ marginBottom: '12px', margin: '0 auto' }} />
+                <p style={{ fontSize: '0.9rem' }}>No {testMode ? 'Test' : 'Real'} assets found.</p>
+                <p style={{ fontSize: '0.75rem' }}>{mode === 'business' ? 'Register your first asset to see it here.' : 'No tokenized assets available for purchase.'}</p>
+              </div>
+            );
+          }
+          return list.map(asset => (
+            <MobileAssetCard 
+              key={asset.id}
+              asset={asset}
+              testMode={testMode}
+              isInvestor={mode === 'investor'}
+              onDelete={() => setAssetToDelete(asset)}
+              onEdit={() => {
+                setEditingAsset(asset);
+                setNewAsset({
+                  name: asset.name,
+                  businessName: asset.businessName,
+                  value: asset.value.toString(),
+                  cashflow: asset.cashflow.toString(),
+                  category: asset.category || 'LAND',
+                  metadata: asset.metadata || {},
+                  isReserved: asset.isReserved || false,
+                  reservedPercentage: asset.reservedPercentage?.toString() || '10'
+                });
+                setShowRegister(true);
+              }}
+              onAction={() => {
+                setActiveAsset(asset);
+                if (mode === 'investor') {
+                  setDrawerMode('buy');
+                } else {
+                  setDrawerMode(asset.isTokenized ? 'recall' : 'tokenize');
+                }
+              }}
+            />
+          ));
+        })()}
       </div>
 
       {/* REGISTRATION DRAWER */}

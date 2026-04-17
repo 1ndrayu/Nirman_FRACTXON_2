@@ -54,9 +54,10 @@ export const StateProvider = ({ children }) => {
             displayName: user.displayName,
             email: user.email,
             photoURL: user.photoURL,
-            role: 'investor', // default
+            role: 'investor',
             balance: 0,
             testBalance: 100000,
+            testMode: false,
             createdAt: serverTimestamp()
           };
           await setDoc(profileRef, newProfile);
